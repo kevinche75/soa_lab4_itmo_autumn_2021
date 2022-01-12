@@ -1,6 +1,6 @@
 package ru.itmo.converter;
 
-import ru.itmo.entity.Difficulty;
+import entity.Difficulty;
 import ru.itmo.validator.ValidatorResult;
 
 import java.io.Serializable;
@@ -13,6 +13,7 @@ import java.util.List;
 public class FieldConverter implements Serializable {
 
     public static String stringConvert(String data, String fieldName, ValidatorResult validatorResult){
+        System.out.println(data);
         if (data == null || data.isEmpty()){
             validatorResult.addMessage(fieldName + " is not specified");
         }

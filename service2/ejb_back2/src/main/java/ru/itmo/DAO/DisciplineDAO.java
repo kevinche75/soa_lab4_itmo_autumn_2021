@@ -4,8 +4,11 @@ import lombok.SneakyThrows;
 import org.glassfish.jersey.SslConfigurator;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import ru.itmo.entity.Discipline;
+import entity.Discipline;
 import ru.itmo.utils.*;
+import utils.DisciplineResult;
+import utils.LabWorksResult;
+import utils.ServerResponse;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -135,7 +138,6 @@ public class DisciplineDAO implements Serializable {
             System.out.println("Discipline was found");
             Response labWorkResponse = getTarget().path(labWorkId.toString()).request().accept(MediaType.APPLICATION_XML).get();
             if (labWorkResponse.getStatus() != 200){
-//                ServerResponse serverResponse = labWorkResponse.readEntity(ServerResponse.class);
                 throw new EntityNotFoundException(String.format("LabWork with id %s wasn't found", labWorkId));
             }
             System.out.println("Response was found");
@@ -158,7 +160,6 @@ public class DisciplineDAO implements Serializable {
             throw e;
         } catch (Exception e){
             e.printStackTrace();
-//            if (transaction != null) transaction.rollback();
             throw e;
         }
     }

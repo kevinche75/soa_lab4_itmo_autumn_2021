@@ -3,15 +3,17 @@ package ru.itmo.service;
 import ru.itmo.DAO.DisciplineDAO;
 import ru.itmo.converter.FieldConverter;
 import ru.itmo.converter.XMLConverter;
-import ru.itmo.entity.Difficulty;
-import ru.itmo.entity.Discipline;
-import ru.itmo.stringEntity.LabWork;
-import ru.itmo.utils.DisciplineResult;
-import ru.itmo.utils.LabWorksResult;
-import ru.itmo.utils.ResponseWrapper;
-import ru.itmo.utils.ServerResponse;
+import entity.Difficulty;
+import entity.Discipline;
+import service.SecondServiceI;
+import service.ServiceError;
+import stringEntity.LabWork;
+import ru.itmo.utils.*;
 import ru.itmo.validator.Validator;
 import ru.itmo.validator.ValidatorResult;
+import utils.DisciplineResult;
+import utils.LabWorksResult;
+import utils.ServerResponse;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityExistsException;
@@ -48,135 +50,139 @@ public class SecondService implements SecondServiceI, Serializable {
     }
 
 
-    public ResponseWrapper getDisciplines(){
+    public DisciplineResult getDisciplines(){
         try {
             DisciplineResult disciplineResult = dao.getAllDisciplines();
-            return new ResponseWrapper(xmlConverter.toStr(disciplineResult));
+            return disciplineResult;
         } catch (Exception e) {
-            return getInfo(500, "Server error, try again");
+            throw new ServiceError(500, "Server error, try again");
         }
     }
 
-    public ResponseWrapper getDiscipline(String stringId){
+    public stringEntity.Discipline getDiscipline(String stringId){
         try {
             ValidatorResult validatorResult = new ValidatorResult();
             Long id = FieldConverter.longConvert(stringId, "Discipline Id", validatorResult);
             if (!validatorResult.isStatus()) {
-                return getInfo(400, validatorResult.getMessage());
+                throw new ServiceError(400, validatorResult.getMessage());
             }
             Optional<Discipline> discipline = dao.getDiscipline(id);
-            if (discipline.isPresent()){
-                return new ResponseWrapper(xmlConverter.toStr(discipline.get().toUnrealDiscipline()));
+            if (discipline.isPresent()) {
+                return discipline.get().toUnrealDiscipline();
             } else {
-                return getInfo(400, String.format("No discipline with id: %s", stringId));
+                throw new ServiceError(400, String.format("No discipline with id: %s", stringId));
             }
+        } catch (ServiceError e){
+            throw e;
         } catch (Exception e){
-            return getInfo(500, "Server error, try again");
+            throw new ServiceError(500, "Server error, try again");
         }
     }
 
-    public ResponseWrapper createDiscipline(String xmlString){
+    public ServerResponse createDiscipline(String name){
         try {
-            ru.itmo.stringEntity.Discipline stringDiscipline = xmlConverter.fromStr(xmlString, ru.itmo.stringEntity.Discipline.class);
-            ValidatorResult validatorResult = Validator.validateDiscipline(stringDiscipline);
+//            stringEntity.Discipline stringDiscipline = xmlConverter.fromStr(name, stringEntity.Discipline.class);
+            ValidatorResult validatorResult = Validator.validateDiscipline(name);
             if (!validatorResult.isStatus()) {
-                return getInfo(400, validatorResult.getMessage());
+                throw new ServiceError(400, validatorResult.getMessage());
             }
-            Discipline discipline = stringDiscipline.toRealDiscipline();
+            Discipline discipline = new Discipline();
+            discipline.setName(name);
             Long id = dao.createDiscipline(discipline);
-
-            return new ResponseWrapper(200);
+            return new ServerResponse("Success");
         }catch (PersistenceException e){
-            return getInfo(400, "Discipline has already existed");
-        } catch (JAXBException e) {
-            return getInfo(400, "Unknown data structure");
+            throw new ServiceError(400, "Discipline has already existed");
+//        } catch (JAXBException e) {
+//            throw new ServiceError(400, "Unknown data structure");
+        } catch (ServiceError e){
+            throw e;
         } catch (Exception e) {
-            return getInfo(500, "Server error, try again");
+            throw new ServiceError(500, "Server error, try again");
         }
     }
 
-    public ResponseWrapper getDisciplineLabWorks(String stringDisciplineId){
+    public LabWorksResult getDisciplineLabWorks(String stringDisciplineId){
         ValidatorResult validatorResult = new ValidatorResult();
         Long id = FieldConverter.longConvert(stringDisciplineId, "Discipline Id", validatorResult);
         if (!validatorResult.isStatus()) {
-            return getInfo(400, validatorResult.getMessage());
+            throw new ServiceError(400, validatorResult.getMessage());
         }
         LabWorksResult result = null;
         try {
             result = dao.getDisciplineLabWorks(id);
         } catch (EntityNotFoundException e){
-            return getInfo(400, e.getMessage());
+            throw new ServiceError(400, e.getMessage());
         }
-        return new ResponseWrapper(xmlConverter.toStr(result));
+        return result;
     }
 
-    public ResponseWrapper addLabWorkToDiscipline(String stringDisciplineId, String stringLabWorkId){
+    public ServerResponse addLabWorkToDiscipline(String stringDisciplineId, String stringLabWorkId){
         ValidatorResult validatorResult = new ValidatorResult();
         Long id = FieldConverter.longConvert(stringDisciplineId, "Discipline Id", validatorResult);
         Long labWorkId = FieldConverter.longConvert(stringLabWorkId, "LabWork Id", validatorResult);
         if (!validatorResult.isStatus()) {
-            return getInfo(400, validatorResult.getMessage());
+            throw new ServiceError(400, validatorResult.getMessage());
         }
         try {
             dao.addLabWork(id, labWorkId);
-        } catch (EntityNotFoundException e){
-            return getInfo(400, e.getMessage());
-        } catch (EntityExistsException e){
-            return getInfo(400, e.getMessage());
+        } catch (EntityNotFoundException | EntityExistsException e){
+            throw new ServiceError(400, e.getMessage());
         }
-        return getInfo(200, "Success");
+        return new ServerResponse("Success");
     }
 
-    public ResponseWrapper removeLabWorkFromDiscipline(String stringDisciplineId, String stringLabWorkId){
+    public ServerResponse removeLabWorkFromDiscipline(String stringDisciplineId, String stringLabWorkId){
         ValidatorResult validatorResult = new ValidatorResult();
         Long id = FieldConverter.longConvert(stringDisciplineId, "Discipline Id", validatorResult);
         Long labWorkId = FieldConverter.longConvert(stringLabWorkId, "LabWork Id", validatorResult);
         if (!validatorResult.isStatus()) {
-            return getInfo(400, validatorResult.getMessage());
+            throw new ServiceError(400, validatorResult.getMessage());
         }
         try {
             dao.deleteLabWorkFromDiscipline(id, labWorkId);
         } catch (EntityNotFoundException e){
-            return getInfo(400, e.getMessage());
+            throw new ServiceError(400, e.getMessage());
         }
-        return new ResponseWrapper(200);
+        return new ServerResponse("Success");
     }
 
-    public ResponseWrapper increaseLabWorkDifficulty(String id, String stringSteps) {
+    public ServerResponse increaseLabWorkDifficulty(String id, String stringSteps) {
         try {
             ValidatorResult validatorResult = new ValidatorResult();
             FieldConverter.longConvert(id, "Discipline Id", validatorResult);
             Integer steps = FieldConverter.intConvert(stringSteps, "Steps", validatorResult);
             if (!validatorResult.isStatus()) {
-                return getInfo(400, validatorResult.getMessage());
+                throw new ServiceError(400, validatorResult.getMessage());
             }
             Response labWorkResponse = dao.getTarget().path(id).request().accept(MediaType.APPLICATION_XML).get();
             if (labWorkResponse.getStatus() != 200){
                 ServerResponse serverResponse = labWorkResponse.readEntity(ServerResponse.class);
-                return getInfo(labWorkResponse.getStatus(), serverResponse.getMessage());
+                throw new ServiceError(labWorkResponse.getStatus(), serverResponse.getMessage());
             }
             String strLab = labWorkResponse.readEntity(String.class);
             LabWork labWork = xmlConverter.fromStr(strLab, LabWork.class);
             int difficulty = Difficulty.valueOf(labWork.getDifficulty()).ordinal();
             int resultDifficulty = difficulty + steps;
             if (!difficultyMap.containsKey(resultDifficulty)){
-                return getInfo(400, "Increased Difficulty out of bounds");
+                throw new ServiceError(400, "Increased Difficulty out of bounds");
             }
             labWork.setDifficulty(difficultyMap.get(resultDifficulty));
             Response changeDifficultyResponse = dao.getTarget().path(id).request().accept(MediaType.APPLICATION_XML).put(Entity.entity(labWork, MediaType.APPLICATION_XML));
             if (changeDifficultyResponse.getStatus() != 200){
                 ServerResponse serverResponse = changeDifficultyResponse.readEntity(ServerResponse.class);
-                return getInfo(changeDifficultyResponse.getStatus(), serverResponse.getMessage());
+                throw new ServiceError(changeDifficultyResponse.getStatus(), serverResponse.getMessage());
             }
+        } catch (ServiceError e){
+            throw e;
         } catch (Exception e){
             e.printStackTrace();
-            return getInfo(500, "Server error, try again");
+            throw new ServiceError(500, "Server error, try again");
         }
-        return getInfo(200, "Success");
+        return new ServerResponse("Success");
     }
 
     @Override
-    public ResponseWrapper test() {
-        return new ResponseWrapper(200, "Success");
+    public ServerResponse test() {
+        return new ServerResponse("Success");
     }
 }

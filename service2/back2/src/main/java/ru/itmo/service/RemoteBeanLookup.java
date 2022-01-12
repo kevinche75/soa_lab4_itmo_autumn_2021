@@ -1,6 +1,10 @@
 package ru.itmo.service;
 
-import ru.itmo.utils.ResponseWrapper;
+import service.SecondServiceI;
+import stringEntity.Discipline;
+import utils.DisciplineResult;
+import utils.LabWorksResult;
+import utils.ServerResponse;
 
 import javax.ejb.EJBException;
 import javax.naming.Context;
@@ -28,36 +32,36 @@ public class RemoteBeanLookup {
             return new SecondServiceI() {
 
                 @Override
-                public ResponseWrapper getDisciplines() {
+                public DisciplineResult getDisciplines() {
                     throw new EJBException("bean is not available");
                 }
 
                 @Override
-                public ResponseWrapper getDiscipline(String stringId) {
+                public Discipline getDiscipline(String stringId) {
                     throw new EJBException("bean is not available");                }
 
                 @Override
-                public ResponseWrapper createDiscipline(String stringDiscipline) {
+                public ServerResponse createDiscipline(String stringDiscipline) {
                     throw new EJBException("bean is not available");                }
 
                 @Override
-                public ResponseWrapper getDisciplineLabWorks(String stringDisciplineId) {
+                public LabWorksResult getDisciplineLabWorks(String stringDisciplineId) {
                     throw new EJBException("bean is not available");                }
 
                 @Override
-                public ResponseWrapper addLabWorkToDiscipline(String stringDisciplineId, String stringLabWorkId) {
+                public ServerResponse addLabWorkToDiscipline(String stringDisciplineId, String stringLabWorkId) {
                     throw new EJBException("bean is not available");                }
 
                 @Override
-                public ResponseWrapper removeLabWorkFromDiscipline(String stringDisciplineId, String stringLabWorkId) {
+                public ServerResponse removeLabWorkFromDiscipline(String stringDisciplineId, String stringLabWorkId) {
                     throw new EJBException("bean is not available");                }
 
                 @Override
-                public ResponseWrapper increaseLabWorkDifficulty(String id, String stringSteps) {
+                public ServerResponse increaseLabWorkDifficulty(String id, String stringSteps) {
                     throw new EJBException("bean is not available");                }
 
                 @Override
-                public ResponseWrapper test() {
+                public ServerResponse test() {
                     throw new EJBException("bean is not available");
                 }
             };

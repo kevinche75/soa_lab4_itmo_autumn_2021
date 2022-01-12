@@ -1,0 +1,13 @@
+stringEntity/Coordinates.class
+utils/LabWorksResult.class
+stringEntity/Location.class
+stringEntity/Discipline.class
+entity/Discipline.class
+entity/Difficulty.class
+utils/DisciplineResult.class
+stringEntity/ShortLabWork.class
+utils/ServerResponse.class
+stringEntity/Person.class
+service/ServiceError.class
+service/SecondServiceI.class
+stringEntity/LabWork.class

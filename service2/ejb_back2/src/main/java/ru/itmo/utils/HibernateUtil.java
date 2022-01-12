@@ -1,11 +1,11 @@
 package ru.itmo.utils;
 
+import entity.Difficulty;
+import entity.Discipline;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
-import ru.itmo.entity.Difficulty;
-import ru.itmo.entity.Discipline;
 
 import java.io.Serializable;
 

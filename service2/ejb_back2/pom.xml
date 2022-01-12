@@ -30,6 +30,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>ru.itmo.soa</groupId>
+            <artifactId>common</artifactId>
+            <version>snapshot</version>
+        </dependency>
+        <dependency>
             <groupId>com.orbitz.consul</groupId>
             <artifactId>consul-client</artifactId>
             <version>${consul-client.version}</version>

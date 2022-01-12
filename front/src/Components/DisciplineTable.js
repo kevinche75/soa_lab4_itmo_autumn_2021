@@ -46,7 +46,7 @@ function DisciplineTable() {
     const createNewDiscipline = async (object) => {
         let xmlObject = xmlBuilder.buildObject(object);
         axios.post(
-            second_host, xmlObject, {headers: {'Content-Type': 'application/xml'}}
+            `${second_host}/`, xmlObject, {headers: {'Content-Type': 'application/xml'}}
         ).then(data => {
             getDisciplineData();
         }).catch(function (error) {
@@ -69,7 +69,7 @@ function DisciplineTable() {
 
     const getDisciplineData = async () => {
         axios.get(
-            second_host
+            `${second_host}/`
         ).then (data => {
             parseString(data.data, { explicitArray: false, ignoreAttrs: true }, function (err, result) {
                 switch (parseInt(result.disciplines_result.totalDisciplines)) {

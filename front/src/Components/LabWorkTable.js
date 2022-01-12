@@ -140,7 +140,7 @@ const LabWorkTable = () => {
 
   const getDisciplineData = async () => {
     axios.get(
-        second_host
+        `${second_host}/`
     ).then (data => {
       parseString(data.data, { explicitArray: false, ignoreAttrs: true }, function (err, result) {
         switch (parseInt(result.disciplines_result.totalDisciplines)) {

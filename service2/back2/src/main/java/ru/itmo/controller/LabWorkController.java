@@ -1,8 +1,9 @@
 package ru.itmo.controller;
 
 import ru.itmo.service.RemoteBeanLookup;
-import ru.itmo.service.SecondServiceI;
+import service.SecondServiceI;
 import ru.itmo.utils.ResponseWrapper;
+import utils.ServerResponse;
 
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -24,9 +25,9 @@ public class LabWorkController {
 
     @PUT
     @Path("/{labwork-id}/difficulty/increase/{steps-count}")
-    public Response increaseLabWorkDifficulty(
+    public ServerResponse increaseLabWorkDifficulty(
             @PathParam("labwork-id") String labWorkId,
             @PathParam("steps-count") String steps){
-        return unwrap(service.increaseLabWorkDifficulty(labWorkId, steps));
+        return service.increaseLabWorkDifficulty(labWorkId, steps);
     }
 }

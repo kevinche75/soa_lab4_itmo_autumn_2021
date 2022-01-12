@@ -8,6 +8,7 @@
     <modules>
         <module>ejb_back2</module>
         <module>back2</module>
+        <module>common</module>
     </modules>
     <groupId>ru.itmo.soa</groupId>
     <version>snapshot</version>
