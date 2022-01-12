@@ -218,8 +218,8 @@ public class DisciplineDAO implements Serializable {
 
     private Client createClientBuilderSSL() {
         SSLContext sslContext = SslConfigurator.newInstance()
-                .keyStoreFile("/Users/kevinche75/servers/payara5/glassfish/domains/domain3/config/payarastore")
-                .trustStoreFile("/Users/kevinche75/servers/payara5/glassfish/domains/domain3/config/payaratruststore.jks")
+//                .keyStoreFile("/Users/kevinche75/servers/payara5/glassfish/domains/domain3/config/payarastore")
+//                .trustStoreFile("/Users/kevinche75/servers/payara5/glassfish/domains/domain3/config/payaratruststore.jks")
                 .keyPassword(keyPassword)
                 .trustStorePassword(trustPassword)
                 .createSSLContext();
