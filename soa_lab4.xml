@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+    <http:listener-config name="soa_lab4-httpListenerConfig" basePath="/lab2/bars">
+        <http:listener-connection host="0.0.0.0" port="8081">
+		</http:listener-connection>
+    </http:listener-config>
+    <apikit:config name="soa_lab4-config" api="soa_lab4.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="94520631-5f77-4887-abb4-8828dd96ad99" >
+		<wsc:connection wsdlLocation="http://localhost:8090/lab2/discipline_service?wsdl" service="discipline_service" port="SoapDisciplineServicePort" address="http://localhost:8090/lab2/discipline_service" >
+			<wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
+		</wsc:connection>
+	</wsc:config>
+	<wsc:config name="Web_Service_Consumer_Config1" doc:name="Web Service Consumer Config" doc:id="6cb1e169-138c-406f-a526-0c5d7c130180" >
+		<wsc:connection wsdlLocation="http://localhost:8090/lab2/labwork_service?wsdl" service="labwork_service" port="SoapLabWorkServicePort" address="http://localhost:8090/lab2/labwork_service" />
+	</wsc:config>
+	<flow name="soa_lab4-main">
+        <http:listener config-ref="soa_lab4-httpListenerConfig" path="/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[output application/java
+---
+{
+"Access-Control-Allow-Origin" : "*",
+"Access-Control-Allow-Methods" : "GET, PUT, POST, DELETE, HEAD, OPTIONS",
+"Access-Control-Allow-Headers" : "Content-Type",
+"Access-Control-Allow-Credentials" : "true"
+}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="soa_lab4-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="soa_lab4-console">
+        <http:listener config-ref="soa_lab4-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="soa_lab4-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\labworks\(labwork-id)\difficulty\increase\(steps-count):soa_lab4-config">
+        <logger level="INFO" message="put:\labworks\(labwork-id)\difficulty\increase\(steps-count):soa_lab4-config" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="7449f09b-7509-4fa5-b25a-ce0f655612a8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+{
+	ns0#increaseLabWorkDifficulty: {
+		arg0: attributes.uriParams.'labwork-id',
+		arg1: attributes.uriParams.'steps-count',
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="id" ><![CDATA[attributes.uriParams.'id']]></ee:set-variable>
+				<ee:set-variable variableName="labwork-id" ><![CDATA[attributes.uriParams.'labwork-id']]></ee:set-variable>
+				<ee:set-variable variableName="labwork-id" ><![CDATA[attributes.uriParams.'labwork-id']]></ee:set-variable>
+				<ee:set-variable variableName="steps-count" ><![CDATA[attributes.uriParams.'steps-count']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<wsc:consume doc:name="Consume" doc:id="d39f6a96-adf6-4099-9f72-3d5d825a4462" config-ref="Web_Service_Consumer_Config1" operation="increaseLabWorkDifficulty"/>
+		<ee:transform doc:name="Transform Message" doc:id="7f379ed7-12c3-4fa4-a37a-fe1e560c33c0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+serverResponse:
+	payload.body.ns0#increaseLabWorkDifficultyResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_On Error Continue" doc:id="80774836-5873-4281-a7b1-6a22fd4b32c5" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="a134b486-b6cf-40fb-8bab-bd09728a7a7f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Set Variable" doc:id="89efe551-ab1f-4b1d-91e1-b47ac64f6425" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="delete:\disciplines\(discipline-id)\labwork\(labwork-id)\remove:soa_lab4-config">
+        <logger level="INFO" message="delete:\disciplines\(discipline-id)\labwork\(labwork-id)\remove:soa_lab4-config" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="a3dfa619-5652-4d77-9cba-ccd885f3c12a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+{
+	ns0#deleteLabWorkFromDiscipline: {
+		arg0: attributes.uriParams.'discipline-id',
+		arg1: attributes.uriParams.'labwork-id'
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="discipline-id" ><![CDATA[attributes.uriParams.'discipline-id']]></ee:set-variable>
+				<ee:set-variable variableName="labwork-id" ><![CDATA[attributes.uriParams.'labwork-id']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<wsc:consume operation="deleteLabWorkFromDiscipline" doc:name="Consume" doc:id="1ffd5ba6-0f09-43fb-b5bc-30fa70530fb6" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="ea22c035-4a6b-44c9-a829-49872e47786c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+serverResponse:
+	payload.body.ns0#deleteLabWorkFromDisciplineResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_On Error Continue" doc:id="153e4cd4-97b0-4999-8cdf-0a445f522120" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="15bf3769-adea-4b3d-bae9-2478758bfc38" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Set Variable" doc:id="99edc0b8-ed5c-4ad0-836f-066b526e33ec" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="options:\disciplines\:soa_lab4-config">
+        <logger level="INFO" message="options:\disciplines\:soa_lab4-config" />
+		<set-variable value="200" doc:name="Copy_of_Copy_of_Set Variable" doc:id="2aeaafe2-27a0-4d88-9b29-ada66ce99c31" variableName="httpStatus" />
+    </flow>
+    <flow name="options:\disciplines\(discipline-id)\labwork\(labwork-id)\remove:soa_lab4-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="discipline-id">attributes.uriParams.'discipline-id'</ee:set-variable>
+                <ee:set-variable variableName="labwork-id">attributes.uriParams.'labwork-id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="options:\disciplines\(discipline-id)\labwork\(labwork-id)\remove:soa_lab4-config" />
+		<set-variable value="200" doc:name="Copy_of_Copy_of_Set Variable" doc:id="f44ac748-b22c-4bc1-90bf-cc258b26a141" variableName="httpStatus" />
+    </flow>
+    <flow name="options:\disciplines\(id):soa_lab4-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="options:\disciplines\(id):soa_lab4-config" />
+		<set-variable value="200" doc:name="Copy_of_Copy_of_Set Variable" doc:id="15ff3f1a-9d7f-4342-b8df-137b7c878b9c" variableName="httpStatus" />
+    </flow>
+    <flow name="options:\disciplines\(id)\labworks:soa_lab4-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="options:\disciplines\(id)\labworks:soa_lab4-config" />
+		<set-variable value="200" doc:name="Copy_of_Copy_of_Set Variable" doc:id="a254db59-2349-4af3-8840-f8809c922e40" variableName="httpStatus" />
+    </flow>
+    <flow name="options:\disciplines\(id)\(labwork-id):soa_lab4-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+                <ee:set-variable variableName="labwork-id">attributes.uriParams.'labwork-id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="options:\disciplines\(id)\(labwork-id):soa_lab4-config" />
+		<set-variable value="200" doc:name="Copy_of_Copy_of_Set Variable" doc:id="e7a11ff7-5149-405a-bf5c-7145210b5532" variableName="httpStatus" />
+    </flow>
+    <flow name="options:\labworks\(labwork-id)\difficulty\increase\(steps-count):soa_lab4-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core">
+            <ee:variables>
+                <ee:set-variable variableName="labwork-id">attributes.uriParams.'labwork-id'</ee:set-variable>
+                <ee:set-variable variableName="steps-count">attributes.uriParams.'steps-count'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="options:\labworks\(labwork-id)\difficulty\increase\(steps-count):soa_lab4-config" />
+		<set-variable value="200" doc:name="Copy_of_Copy_of_Set Variable" doc:id="2dfc2bec-148c-4e2a-9c08-09cee4eff97f" variableName="httpStatus" />
+    </flow>
+    <flow name="get:\disciplines\:soa_lab4-config">
+        <logger level="INFO" message="get:\disciplines\:soa_lab4-config" />
+		<wsc:consume operation="getDisciplines" doc:name="Consume" doc:id="967029eb-cd55-4b07-b519-328119c11fa5" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="2dc9b64f-b1bd-4f6f-b7e1-4bb75842f552" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+disciplines_result:
+	payload.body.ns0#getDisciplinesResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_Copy_of_On Error Continue" doc:id="ec1ed29e-ff32-4c68-82c8-0dd7f7727b82" >
+				<ee:transform doc:name="Copy_of_Copy_of_Transform Message" doc:id="d6e8cdb0-ddc3-4860-9da6-aca89bca0b39" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Copy_of_Set Variable" doc:id="9e523d92-413f-457f-8e4c-43735246460a" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="get:\disciplines\(id):soa_lab4-config">
+        <logger level="INFO" message="get:\disciplines\(id):soa_lab4-config" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="c279d1bf-f994-4cbf-a084-9afb440fc89e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+{
+	ns0#getDiscipline: {
+		arg0: attributes.uriParams.'id'
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="id" ><![CDATA[attributes.uriParams.'id']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<wsc:consume operation="getDiscipline" doc:name="Consume" doc:id="9457bf59-180b-46eb-907f-6135db6eeedd" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="233a4475-0911-4a34-9a81-c09d328814a4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+discipline:
+	payload.body.ns0#getDisciplineResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_On Error Continue" doc:id="7c16c11d-e579-426c-b400-4d65b0d0bd49" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="e493af67-41ce-46ab-8cfe-57cc1acae215" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Set Variable" doc:id="2b021d38-7fd3-46e2-a49c-478d92bacc54" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="get:\disciplines\(id)\labworks:soa_lab4-config">
+        <logger level="INFO" message="get:\disciplines\(id)\labworks:soa_lab4-config" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="7020fbf5-38df-41f5-8ae8-dc2ffbab8151" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+{
+	ns0#getDisciplineLabWorks: {
+		arg0: attributes.uriParams.'id'
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="getDisciplineLabWorks" doc:name="Consume" doc:id="4647a12f-00fe-4077-b542-f15a358302a9" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="2d4fb2b4-0926-447b-a54a-25491f066ffd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+labworks_result:
+	payload.body.ns0#getDisciplineLabWorksResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_On Error Continue" doc:id="024b4c48-0dc1-4212-8d3f-f9c671d80957" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="ef21753c-b4c6-4c84-ab73-f52e5ccc9726" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Set Variable" doc:id="fbed8f9f-cc56-492c-8abf-fdc640edacd5" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="post:\disciplines\:application\xml:soa_lab4-config">
+        <logger level="INFO" message="post:\disciplines\:application\xml:soa_lab4-config" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="5c20e9af-e912-40d5-8885-07b4517eb03b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+{
+	ns0#createDiscipline: {
+		arg0: payload.discipline.name as String
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume doc:name="Consume" doc:id="bae192a5-25ed-40d1-b0f3-90fbcc73c4c4" config-ref="Web_Service_Consumer_Config" operation="createDiscipline"/>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="ac6c9881-8990-4e59-adcf-867c008e2fba" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+serverResponse:
+	payload.body.ns0#createDisciplineResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_On Error Continue" doc:id="096ef15b-8783-47c1-a814-83bbcc5092b4" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="c711ec77-4173-4f80-b54b-2c5ec30cd820" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Set Variable" doc:id="e3d1f4e9-ce6e-4382-9a2b-a3603f5057a6" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+    <flow name="post:\disciplines\(id)\(labwork-id):soa_lab4-config">
+        <logger level="INFO" message="post:\disciplines\(id)\(labwork-id):soa_lab4-config" />
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="531cbc18-8694-4a12-a70e-36a35a5ab464" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+{
+	ns0#addLabWorkToDiscipline: {
+		arg0: attributes.uriParams.id,
+		arg1: attributes.uriParams."labwork-id"	
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="id" ><![CDATA[attributes.uriParams.'id']]></ee:set-variable>
+				<ee:set-variable variableName="labwork-id" ><![CDATA[attributes.uriParams.'labwork-id']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<wsc:consume doc:name="Consume" doc:id="32111aad-7118-4dcf-957f-2426184f406b" config-ref="Web_Service_Consumer_Config" operation="addLabWorkToDiscipline"/>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="ebac3b03-aba6-436a-bccd-043e3f9a212b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+ns ns0 http://soap.itmo.ru/
+output application/xml
+---
+serverResponse:
+	payload.body.ns0#addLabWorkToDisciplineResponse.return]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="Copy_of_On Error Continue" doc:id="68547a9a-3c21-4cd6-b8ec-bb156e252298" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="b62a90c3-8b0e-4fca-8f21-38563897a7ac" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+var parsed = error.detailedDescription splitBy(".")
+---
+detail: {
+	code: parsed[1] as String,
+	message: parsed[0]
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="code" ><![CDATA[%dw 2.0
+var parsed = error.detailedDescription splitBy(".")
+output application/xml
+---
+code: parsed[1] as String]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value="#[output application/java&#10;---&#10;vars.code.code]" doc:name="Copy_of_Set Variable" doc:id="13bbf57f-e169-4a4c-a757-2375c5a9d5bb" variableName="httpStatus" />
+			</on-error-continue>
+		</error-handler>
+    </flow>
+</mule>

@@ -1,0 +1,176 @@
+#%RAML 1.0
+title: soa_lab4
+mediaType: 
+- application/xml
+protocols:
+  - HTTPS
+baseUri: /lab2/bars/disciplines
+version: "2.0"
+/disciplines/:
+  get:
+    displayName: Get Disciplines
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+  options:
+    displayName: Options
+    responses:
+      200: {}
+    securedBy: []
+  post:
+    displayName: Create Discipline
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+    body:
+      type: discipline
+/disciplines/{id}:
+  get:
+    displayName: Get Discipline by Id
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+  options:
+    displayName: Options
+    responses:
+      200: {}
+    securedBy: []
+  uriParameters:
+    id:
+      example: test
+      type: string
+/disciplines/{id}/labworks:
+  get:
+    displayName: Get Discipline's LabWorks
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+  options:
+    displayName: Options
+    responses:
+      200: {}
+    securedBy: []
+  uriParameters:
+    id:
+      example: test
+      type: string
+/disciplines/{discipline-id}/labwork/{labwork-id}/remove:
+  delete:
+    displayName: Delete LabWork From Discipline
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+  options:
+    displayName: Options
+    responses:
+      200: {}
+    securedBy: []
+  uriParameters:
+    discipline-id:
+      example: test
+      type: string
+    labwork-id:
+      example: test
+      type: string
+/disciplines/{id}/{labwork-id}:
+  post:
+    displayName: Add LabWork to Discipline
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+  options:
+    displayName: Options
+    responses:
+      200: {}
+    securedBy: []
+  uriParameters:
+    id:
+      example: test
+      type: string
+    labwork-id:
+      example: test
+      type: string
+/labworks/{labwork-id}/difficulty/increase/{steps-count}:
+  put:
+    displayName: Increase LabWork Difficulty
+    responses:
+      200:
+        body:
+          type: object
+      400:
+        body:
+          type: object
+      500:
+        body:
+          type: object
+    securedBy: []
+  options:
+    displayName: Options
+    responses:
+      200: {}
+    securedBy: []
+  uriParameters:
+    labwork-id:
+      example:
+        test 
+      type: string
+    steps-count:
+      example:
+        test 
+      type: string
+types:
+  discipline:
+    properties:
+      name:
+        example:
+          test
+        type:
+          string
